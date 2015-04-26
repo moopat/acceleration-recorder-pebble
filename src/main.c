@@ -1,5 +1,6 @@
 #include <pebble.h>
 #include <inttypes.h>
+#include <math.h>
 
 #define KEY_COMMAND 0 // the key tells the smartphone what kind of data to expect
 #define COMMAND_DATA 1
