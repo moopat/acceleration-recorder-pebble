@@ -3,7 +3,7 @@
 
 #define KEY_COMMAND 0 // the key tells the smartphone what kind of data to expect
 #define COMMAND_DATA 1
-#define NUMBER_SAMPLES 20 // samples are reported every 20 samples, so every two seconds
+#define NUMBER_SAMPLES 25 // samples are reported every 25 samples, so every second
 #define NUMBER_PARAMETERS 3 // number of parameters for every sample
 
 static Window *s_main_window;
@@ -93,7 +93,7 @@ static void init() {
 	accel_data_service_subscribe(NUMBER_SAMPLES, data_handler);
 
 	// Choose update rate
-	accel_service_set_sampling_rate(ACCEL_SAMPLING_10HZ);
+	accel_service_set_sampling_rate(ACCEL_SAMPLING_25HZ);
 	
 	// Register callbacks
   app_message_register_outbox_failed(outbox_failed_callback);
