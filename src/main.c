@@ -4,10 +4,29 @@
 #define KEY_COMMAND 0 // the key tells the smartphone what kind of data to expect
 #define COMMAND_DATA 1
 #define NUMBER_SAMPLES 25 // samples are reported every 25 samples, so every second
-#define NUMBER_PARAMETERS 3 // number of parameters for every sample
+#define NUMBER_PARAMETERS 1 // number of parameters for every sample
 
 static Window *s_main_window;
 static TextLayer *s_status_layer;
+
+// http://forums.getpebble.com/discussion/5792/sqrt-function
+float my_sqrt(const float num) {
+  const uint MAX_STEPS = 40;
+  const float MAX_ERROR = 0.001;
+  
+  float answer = num;
+  float ans_sqr = answer * answer;
+  uint step = 0;
+  while((ans_sqr - num > MAX_ERROR) && (step++ < MAX_STEPS)) {
+    answer = (answer + (num / answer)) / 2;
+    ans_sqr = answer * answer;
+  }
+  return answer;
+}
+
+unsigned int get_vertical_acceleration(int x, int y, int z){
+	return my_sqrt(pow(x, 2) + pow(y, 2) + pow(z, 2));
+}
 
 // A new batch of acceleration data was received.
 static void data_handler(AccelData *data, uint32_t num_samples) {	
@@ -19,21 +38,13 @@ static void data_handler(AccelData *data, uint32_t num_samples) {
 	for(uint sample = 0; sample < num_samples; sample++){
 		
 		/*
-		X = 0
-		Y = 1
-		Z = 2
+		VERTICAL ACCELERATION = 0
 		+1 is added to ensure that 0 is always the command.
 		*/
-
-		// Add acceleration data
-		Tuplet t3 = TupletInteger(NUMBER_PARAMETERS * sample + 0 + 1, data[sample].x);
-		dict_write_tuplet(iterator, &t3);
 		
-		Tuplet t4 = TupletInteger(NUMBER_PARAMETERS * sample + 1 + 1, data[sample].y);
-		dict_write_tuplet(iterator, &t4);
-		
-		Tuplet t5 = TupletInteger(NUMBER_PARAMETERS * sample + 2 + 1, data[sample].z);
-		dict_write_tuplet(iterator, &t5);
+		uint vertical_acceleration = get_vertical_acceleration(data[sample].x, data[sample].y, data[sample].z);
+		Tuplet t = TupletInteger(NUMBER_PARAMETERS * sample + 0 + 1, vertical_acceleration);
+		dict_write_tuplet(iterator, &t);
 	}
 	
 	app_message_outbox_send();
