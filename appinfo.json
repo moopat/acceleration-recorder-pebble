@@ -1,0 +1,22 @@
+{
+    "appKeys": {
+        "KEY_COMMAND": 0
+    },
+    "capabilities": [
+        ""
+    ],
+    "companyName": "Markus Deutsch",
+    "longName": "Acceleration Stream",
+    "projectType": "native",
+    "resources": {
+        "media": []
+    },
+    "sdkVersion": "2",
+    "shortName": "Accel-Stream",
+    "uuid": "e892fa89-8790-4fc7-a77e-19b4e09d53f4",
+    "versionCode": 1,
+    "versionLabel": "1.0",
+    "watchapp": {
+        "watchface": false
+    }
+}
