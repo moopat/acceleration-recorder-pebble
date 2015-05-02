@@ -49,22 +49,20 @@ static void send_batch(){
 		VERTICAL ACCELERATION = 0
 		+1 is added to ensure that 0 is always the command.
 		*/
-		
-		//uint vertical_acceleration = batch[sample];
 		Tuplet t = TupletInteger(NUMBER_PARAMETERS * sample + 0 + 1, batch[sample]);
 		dict_write_tuplet(iterator, &t);
 	}
 	app_message_outbox_send();
 }
 
-//static uint count = 0;
+static uint count = 0;
 // A new batch of acceleration data was received.
 static void data_handler(AccelData *data, uint32_t num_samples) {	
 	unsigned int batch[NUMBER_SAMPLES];
 	
 	for(uint sample = 0; sample < num_samples; sample++){
-		//batch[sample] = ++count;
-		batch[sample] = get_vertical_acceleration(data[sample].x, data[sample].y, data[sample].z);
+		batch[sample] = ++count;
+		//batch[sample] = get_vertical_acceleration(data[sample].x, data[sample].y, data[sample].z);
 	}
 	
 	add_to_store(batch);
@@ -105,14 +103,34 @@ static void updateTextLayer(bool success){
   text_layer_set_text(s_status_layer, buffer);
 }
 
+char *translate_error(AppMessageResult result) {
+  switch (result) {
+    case APP_MSG_OK: return "APP_MSG_OK";
+    case APP_MSG_SEND_TIMEOUT: return "APP_MSG_SEND_TIMEOUT";
+    case APP_MSG_SEND_REJECTED: return "APP_MSG_SEND_REJECTED";
+    case APP_MSG_NOT_CONNECTED: return "APP_MSG_NOT_CONNECTED";
+    case APP_MSG_APP_NOT_RUNNING: return "APP_MSG_APP_NOT_RUNNING";
+    case APP_MSG_INVALID_ARGS: return "APP_MSG_INVALID_ARGS";
+    case APP_MSG_BUSY: return "APP_MSG_BUSY";
+    case APP_MSG_BUFFER_OVERFLOW: return "APP_MSG_BUFFER_OVERFLOW";
+    case APP_MSG_ALREADY_RELEASED: return "APP_MSG_ALREADY_RELEASED";
+    case APP_MSG_CALLBACK_ALREADY_REGISTERED: return "APP_MSG_CALLBACK_ALREADY_REGISTERED";
+    case APP_MSG_CALLBACK_NOT_REGISTERED: return "APP_MSG_CALLBACK_NOT_REGISTERED";
+    case APP_MSG_OUT_OF_MEMORY: return "APP_MSG_OUT_OF_MEMORY";
+    case APP_MSG_CLOSED: return "APP_MSG_CLOSED";
+    case APP_MSG_INTERNAL_ERROR: return "APP_MSG_INTERNAL_ERROR";
+    default: return "UNKNOWN ERROR";
+  }
+}
+
 static void outbox_failed_callback(DictionaryIterator *iterator, AppMessageResult reason, void *context) {
-  APP_LOG(APP_LOG_LEVEL_ERROR, "Outbox send failed!");
+	APP_LOG(APP_LOG_LEVEL_ERROR, "Outbox send failed: %i - %s", reason, translate_error(reason));
 	updateTextLayer(false);
 	send_batch();
 }
 
 static void outbox_sent_callback(DictionaryIterator *iterator, void *context) {
-  APP_LOG(APP_LOG_LEVEL_INFO, "Outbox send success!");
+  //APP_LOG(APP_LOG_LEVEL_INFO, "Outbox send success!");
 	updateTextLayer(true);
 	remove_from_store(NUMBER_SAMPLES);
 	send_batch();
