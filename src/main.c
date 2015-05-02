@@ -1,6 +1,7 @@
 #include <pebble.h>
 #include <inttypes.h>
 #include <math.h>
+#include <store.h>
 
 #define KEY_COMMAND 0 // the key tells the smartphone what kind of data to expect
 #define COMMAND_DATA 1
@@ -9,6 +10,7 @@
 
 static Window *s_main_window;
 static TextLayer *s_status_layer;
+static bool sending = false;
 
 // http://forums.getpebble.com/discussion/5792/sqrt-function
 float my_sqrt(const float num) {
@@ -29,26 +31,47 @@ unsigned int get_vertical_acceleration(int x, int y, int z){
 	return my_sqrt(pow(x, 2) + pow(y, 2) + pow(z, 2));
 }
 
-// A new batch of acceleration data was received.
-static void data_handler(AccelData *data, uint32_t num_samples) {	
+static void send_batch(){
+	if(get_store_size() < 1){
+		sending = false;
+		return;
+	}
+	sending = true;
+	
 	DictionaryIterator *iterator;
 	app_message_outbox_begin(&iterator);
-
 	dict_write_int8(iterator, KEY_COMMAND, COMMAND_DATA);
 	
-	for(uint sample = 0; sample < num_samples; sample++){
-		
+	unsigned int *batch;
+	batch = get_batch_from_store();
+	for(uint sample = 0; sample < NUMBER_SAMPLES; sample++){
 		/*
 		VERTICAL ACCELERATION = 0
 		+1 is added to ensure that 0 is always the command.
 		*/
 		
-		uint vertical_acceleration = get_vertical_acceleration(data[sample].x, data[sample].y, data[sample].z);
-		Tuplet t = TupletInteger(NUMBER_PARAMETERS * sample + 0 + 1, vertical_acceleration);
+		//uint vertical_acceleration = batch[sample];
+		Tuplet t = TupletInteger(NUMBER_PARAMETERS * sample + 0 + 1, batch[sample]);
 		dict_write_tuplet(iterator, &t);
 	}
-	
 	app_message_outbox_send();
+}
+
+//static uint count = 0;
+// A new batch of acceleration data was received.
+static void data_handler(AccelData *data, uint32_t num_samples) {	
+	unsigned int batch[NUMBER_SAMPLES];
+	
+	for(uint sample = 0; sample < num_samples; sample++){
+		//batch[sample] = ++count;
+		batch[sample] = get_vertical_acceleration(data[sample].x, data[sample].y, data[sample].z);
+	}
+	
+	add_to_store(batch);
+	
+	if(!sending){
+		send_batch();
+	}
 }
 
 static void main_window_load(Window *window) {
@@ -85,11 +108,14 @@ static void updateTextLayer(bool success){
 static void outbox_failed_callback(DictionaryIterator *iterator, AppMessageResult reason, void *context) {
   APP_LOG(APP_LOG_LEVEL_ERROR, "Outbox send failed!");
 	updateTextLayer(false);
+	send_batch();
 }
 
 static void outbox_sent_callback(DictionaryIterator *iterator, void *context) {
   APP_LOG(APP_LOG_LEVEL_INFO, "Outbox send success!");
 	updateTextLayer(true);
+	remove_from_store(NUMBER_SAMPLES);
+	send_batch();
 }
 
 static void init() {
