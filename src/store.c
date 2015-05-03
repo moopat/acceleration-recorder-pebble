@@ -2,7 +2,7 @@
 #include <store.h>
 	
 #define STORE_BATCH_SIZE 25
-#define STORE_RETENTION 75
+#define STORE_RETENTION 25
 
 unsigned int batch[STORE_BATCH_SIZE];
 unsigned int store[STORE_RETENTION];
@@ -38,6 +38,6 @@ unsigned int* get_batch_from_store(){
 	return batch;
 }
 
-int get_store_size(){
-	return write_position;
+bool has_stored_data(){
+	return write_position > 0;
 }
