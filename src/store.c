@@ -2,7 +2,7 @@
 #include <store.h>
 	
 #define STORE_BATCH_SIZE 25
-#define STORE_RETENTION 25
+#define STORE_RETENTION 100
 
 unsigned int batch[STORE_BATCH_SIZE];
 unsigned int store[STORE_RETENTION];
@@ -30,12 +30,11 @@ void remove_from_store(int number_of_samples){
 	//APP_LOG(APP_LOG_LEVEL_INFO, "Removed %d samples. Next writing position is %d.", number_of_samples, write_position);
 }
 
-unsigned int* get_batch_from_store(){
+void get_batch_from_store(unsigned int *batch){
 	//memcpy(batch, &store[0], ??) TODO: Check out how that can be used here.
 	for(int i = 0; i < STORE_BATCH_SIZE; i++){
 		batch[i] = store[i];
 	}
-	return batch;
 }
 
 bool has_stored_data(){

@@ -18,13 +18,13 @@ static void send_batch(){
 		return;
 	}
 	sending = true;
-	
+
 	DictionaryIterator *iterator;
 	app_message_outbox_begin(&iterator);
 	dict_write_int8(iterator, KEY_COMMAND, COMMAND_DATA);
 	
-	unsigned int *batch;
-	batch = get_batch_from_store();
+	unsigned int batch[NUMBER_SAMPLES];
+	get_batch_from_store(batch);
 	for(uint sample = 0; sample < NUMBER_SAMPLES; sample++){
 		/*
 		VERTICAL ACCELERATION = 0
