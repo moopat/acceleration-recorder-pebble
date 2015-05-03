@@ -36,14 +36,14 @@ static void send_batch(){
 	app_message_outbox_send();
 }
 
-static uint count = 0;
+//static uint count = 0;
 // A new batch of acceleration data was received.
 static void data_handler(AccelData *data, uint32_t num_samples) {	
 	unsigned int batch[NUMBER_SAMPLES];
 	
 	for(uint sample = 0; sample < num_samples; sample++){
-		batch[sample] = ++count;
-		//batch[sample] = get_vertical_acceleration(data[sample].x, data[sample].y, data[sample].z);
+		//batch[sample] = ++count;
+		batch[sample] = get_vertical_acceleration(data[sample].x, data[sample].y, data[sample].z);
 	}
 	
 	add_to_store(batch);

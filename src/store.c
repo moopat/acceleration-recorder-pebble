@@ -2,7 +2,7 @@
 #include <store.h>
 	
 #define STORE_BATCH_SIZE 25
-#define STORE_RETENTION 100
+#define STORE_RETENTION 175
 
 unsigned int store[STORE_RETENTION];
 int write_position = 0;
@@ -10,7 +10,7 @@ int write_position = 0;
 void add_to_store(unsigned int new_data[]){
 	//APP_LOG(APP_LOG_LEVEL_INFO, "Adding to store. Writing position is %d.", write_position);
 	// Check size of store. Rely that new_data contains STORE_BATCH_SIZE samples.
-	if((STORE_BATCH_SIZE + write_position) > STORE_RETENTION){
+	if(STORE_BATCH_SIZE + write_position > STORE_RETENTION){
 		// Subtract number of remaining spots from the batch size.
 		remove_from_store(write_position + STORE_BATCH_SIZE - STORE_RETENTION);
 	}
