@@ -4,7 +4,6 @@
 #define STORE_BATCH_SIZE 25
 #define STORE_RETENTION 100
 
-unsigned int batch[STORE_BATCH_SIZE];
 unsigned int store[STORE_RETENTION];
 int write_position = 0;
 
@@ -23,10 +22,12 @@ void add_to_store(unsigned int new_data[]){
 }
 
 void remove_from_store(int number_of_samples){
-	for(int i = 0; i < number_of_samples; i++){
+	for(int i = 0; i + number_of_samples < STORE_RETENTION; i++){
 		store[i] = store[number_of_samples + i];
-		write_position--;
+		// For debug reasons, we flag empty fields:
+		store[number_of_samples + i] = 0;
 	}
+	write_position = write_position - number_of_samples;
 	//APP_LOG(APP_LOG_LEVEL_INFO, "Removed %d samples. Next writing position is %d.", number_of_samples, write_position);
 }
 
