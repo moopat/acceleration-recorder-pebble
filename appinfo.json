@@ -9,7 +9,14 @@
     "longName": "Acceleration Recorder",
     "projectType": "native",
     "resources": {
-        "media": []
+        "media": [
+            {
+                "characterRegex": "[0-9:.]",
+                "file": "fonts/DIGITAL_SEVEN_50.ttf",
+                "name": "FONT_DIGITAL_SEVEN_50",
+                "type": "font"
+            }
+        ]
     },
     "sdkVersion": "2",
     "shortName": "Accel-Recorder",

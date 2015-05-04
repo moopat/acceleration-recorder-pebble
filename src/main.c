@@ -2,6 +2,7 @@
 #include <inttypes.h>
 #include <store.h>
 #include <util.h>
+#include <main.h>
 
 #define KEY_COMMAND 0 // the key tells the smartphone what kind of data to expect
 #define COMMAND_DATA 1
@@ -10,6 +11,8 @@
 
 static Window *s_main_window;
 static TextLayer *s_status_layer;
+static TextLayer *s_clock_layer;
+static GFont s_clock_font;
 static bool sending = false;
 
 static void send_batch(){
@@ -57,41 +60,69 @@ static void main_window_load(Window *window) {
   Layer *window_layer = window_get_root_layer(window);
 	GRect window_bounds = layer_get_bounds(window_layer);
 	
-	s_status_layer = text_layer_create(GRect(0, 20, window_bounds.size.w, window_bounds.size.h-40));
+	window_set_background_color(window, GColorBlack);
+	
+	s_status_layer = text_layer_create(GRect(0, window_bounds.size.h-22, window_bounds.size.w, 20));
 	text_layer_set_background_color(s_status_layer, GColorClear);
-	text_layer_set_text_color(s_status_layer, GColorBlack);
-	text_layer_set_font(s_status_layer, fonts_get_system_font(FONT_KEY_GOTHIC_28_BOLD));
+	text_layer_set_text_color(s_status_layer, GColorWhite);
+	text_layer_set_font(s_status_layer, fonts_get_system_font(FONT_KEY_GOTHIC_18));
 	text_layer_set_text_alignment(s_status_layer, GTextAlignmentCenter);
 	layer_add_child(window_get_root_layer(window), text_layer_get_layer(s_status_layer));
+	
+	s_clock_font = fonts_load_custom_font(resource_get_handle(RESOURCE_ID_FONT_DIGITAL_SEVEN_50));
+	
+	s_clock_layer = text_layer_create(GRect(0, 40, window_bounds.size.w, window_bounds.size.h - 62));
+	text_layer_set_background_color(s_clock_layer, GColorClear);
+	text_layer_set_text_color(s_clock_layer, GColorWhite);
+	text_layer_set_font(s_clock_layer, s_clock_font);
+	text_layer_set_text_alignment(s_clock_layer, GTextAlignmentCenter);
+	layer_add_child(window_get_root_layer(window), text_layer_get_layer(s_clock_layer));
+	
+	update_clock();
 }
 
 static void main_window_unload(Window *window) {
   text_layer_destroy(s_status_layer);
+	text_layer_destroy(s_clock_layer);
+	fonts_unload_custom_font(s_clock_font);
 }
 
-static void updateTextLayer(bool success){
+static void update_status(bool success){
 	time_t temp = time(NULL); 
   struct tm *tick_time = localtime(&temp);
 	
-	static char buffer[] = "SUCCESS\n@\n00:00:00";
+	static char buffer[] = "OK@00:00:00";
 	
 	if(success){
-		strftime(buffer, sizeof("SUCCESS\n@\n00:00:00"), "SUCCESS\n@\n%H:%M:%S", tick_time);
+		strftime(buffer, sizeof(buffer), "OK@%H:%M:%S", tick_time);
 	} else {
-		strftime(buffer, sizeof("ERROR\n@\n00:00:00"), "ERROR\n@\n%H:%M:%S", tick_time);
+		strftime(buffer, sizeof(buffer), "ER@%H:%M:%S", tick_time);
 	}
 	
   text_layer_set_text(s_status_layer, buffer);
 }
 
+static void update_clock(){
+	time_t temp = time(NULL); 
+  struct tm *tick_time = localtime(&temp);
+	
+	static char buffer[] = "00:00";
+	strftime(buffer, sizeof(buffer), "%H:%M", tick_time);
+	text_layer_set_text(s_clock_layer, buffer);
+}
+
+static void tick_handler(struct tm *tick_time, TimeUnits units_changed) {
+	update_clock();	
+}
+
 static void outbox_failed_callback(DictionaryIterator *iterator, AppMessageResult reason, void *context) {
 	APP_LOG(APP_LOG_LEVEL_ERROR, "Outbox send failed: %i - %s", reason, translate_error(reason));
-	updateTextLayer(false);
+	update_status(false);
 	send_batch();
 }
 
 static void outbox_sent_callback(DictionaryIterator *iterator, void *context) {
-	updateTextLayer(true);
+	update_status(true);
 	remove_from_store(NUMBER_SAMPLES);
 	send_batch();
 }
@@ -117,6 +148,9 @@ static void init() {
   
   // Open AppMessage
   app_message_open(app_message_inbox_size_maximum(), app_message_outbox_size_maximum());
+	
+	// Sign up for time updates.
+	tick_timer_service_subscribe(MINUTE_UNIT, tick_handler);
 }
 
 static void deinit() {
