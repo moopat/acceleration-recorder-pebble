@@ -1,13 +1,15 @@
 #include <pebble.h>
 #include <inttypes.h>
-#include <store.h>
-#include <util.h>
-#include <main.h>
+#include "store.h"
+#include "util.h"
+#include "main.h"
+#include "config.h"
 
 #define KEY_COMMAND 0 // the key tells the smartphone what kind of data to expect
 #define COMMAND_DATA 1
-#define NUMBER_SAMPLES 25 // samples are reported every 25 samples, so every second
 #define NUMBER_PARAMETERS 1 // number of parameters for every sample
+	
+const AccelSamplingRate CFG_SAMPLING_RATE_PBL = ACCEL_SAMPLING_50HZ;
 
 static Window *s_main_window;
 static TextLayer *s_status_layer;
@@ -26,9 +28,9 @@ static void send_batch(){
 	app_message_outbox_begin(&iterator);
 	dict_write_int8(iterator, KEY_COMMAND, COMMAND_DATA);
 	
-	unsigned int batch[NUMBER_SAMPLES];
+	unsigned int batch[CFG_BATCH_SIZE];
 	get_batch_from_store(batch);
-	for(uint sample = 0; sample < NUMBER_SAMPLES; sample++){
+	for(uint sample = 0; sample < CFG_BATCH_SIZE; sample++){
 		/*
 		VERTICAL ACCELERATION = 0
 		+1 is added to ensure that 0 is always the command.
@@ -42,7 +44,7 @@ static void send_batch(){
 //static uint count = 0;
 // A new batch of acceleration data was received.
 static void data_handler(AccelData *data, uint32_t num_samples) {	
-	unsigned int batch[NUMBER_SAMPLES];
+	unsigned int batch[CFG_BATCH_SIZE];
 	
 	for(uint sample = 0; sample < num_samples; sample++){
 		//batch[sample] = ++count;
@@ -123,7 +125,7 @@ static void outbox_failed_callback(DictionaryIterator *iterator, AppMessageResul
 
 static void outbox_sent_callback(DictionaryIterator *iterator, void *context) {
 	update_status(true);
-	remove_from_store(NUMBER_SAMPLES);
+	remove_from_store(CFG_BATCH_SIZE);
 	send_batch();
 }
 
@@ -137,10 +139,10 @@ static void init() {
   window_stack_push(s_main_window, true);
 
   // Subscribe to the accelerometer data service
-	accel_data_service_subscribe(NUMBER_SAMPLES, data_handler);
+	accel_data_service_subscribe(CFG_BATCH_SIZE, data_handler);
 
 	// Choose update rate
-	accel_service_set_sampling_rate(ACCEL_SAMPLING_25HZ);
+	accel_service_set_sampling_rate(CFG_SAMPLING_RATE_PBL);
 	
 	// Register callbacks
   app_message_register_outbox_failed(outbox_failed_callback);
