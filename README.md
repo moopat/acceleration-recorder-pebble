@@ -1,6 +1,8 @@
 # Acceleration Recorder for Pebble
 This is the watchapp for the [Acceleration Recorder for Android](https://github.com/moopat/acceleration-recorder-android). Once the app is started it sends the Euclidean norm of the data obtained by the accelerometer to the smartwatch. To send data collected when the watch is vibrating press the (small) select button on the watch while the app is running. When adapting parameters such as the sampling rate or batch size please make sure to change them on the smartwatch *and* the smartphone.
 
+To run it you can import this GIT project into CloudPebble.
+
 ## Attribution
 The font used for the watch interface is by [Digital 7](http://www.dafont.com/de/digital-7.font?text=12%3A00).
 
